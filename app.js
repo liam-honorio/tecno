@@ -4,6 +4,7 @@ const vm = new Vue({
     produtos: [],
     produto: false,
     carrinho: [],
+    carrinhoAtivo: false,
     mensagemAlerta: "Item Adicionado",
     alertaAtivo: false
   },
@@ -48,9 +49,11 @@ const vm = new Vue({
         behavior: "smooth"
       });
     },
-
     fecharModal({ target, currentTarget }) {
       if (target === currentTarget) this.produto = false;
+    },
+    clickForaCarrinho({ target, currentTarget }) {
+      if (target === currentTarget) this.carrinhoAtivo = false;
     },
     adicionarItem() {
       this.produto.estoque--;
@@ -72,15 +75,34 @@ const vm = new Vue({
       setTimeout(() => {
         this.alertaAtivo = false;
       }, 1500);
+    },
+    router() {
+      const hash = document.location.hash;
+      if (hash) {
+        this.fetchProduto(hash.replace("#", ""));
+      }
+    },
+    compararEstoque() {
+      const itens = this.carrinho.filter(({ id }) => id === this.produto.id);
+      this.produto.estoque -= itens.length;
     }
   },
   watch: {
+    produto() {
+      document.title = this.produto.nome || "Techno";
+      const hash = this.produto.id || "";
+      history.pushState(null, null, `#${hash}`);
+      if (this.produto) {
+        this.compararEstoque();
+      }
+    },
     carrinho() {
       window.localStorage.carrinho = JSON.stringify(this.carrinho);
     }
   },
   created() {
     this.fetchProdutos();
+    this.router();
     this.checarLocalStorage();
   }
 });
